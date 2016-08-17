@@ -118,7 +118,7 @@ class Gym(BaseModel):
     longitude = FloatField()
     last_modified = DateTimeField()
 
-
+pokemonsfound = {}  # pokemon already found
 def parse_map(map_dict):
     pokemons = {}
     pokestops = {}
@@ -143,9 +143,14 @@ def parse_map(map_dict):
             url1 = 'https://www.google.com/maps/place/' + lat1 + ',' + lat2 + '/@' + lat1 + ',' + lat2 + ',30z'
             pbkey = config["PB_KEY"]
             headers = {'Access-Token':str(pbkey)}
-            if pbkey is not None and p['pokemon_data']['pokemon_id'] in mobilealert and p['encounter_id'] not in pokemons:
+            if pbkey is not None and p['pokemon_data']['pokemon_id'] in mobilealert and p['encounter_id'] not in pokemonsfound:
                 requests.post('https://api.pushbullet.com/v2/pushes', headers=headers, data = {'type':'link', 'title':get_pokemon_name(p['pokemon_data']['pokemon_id']) + " expires at " + str(displaytime), 'url':url1})    
-
+            
+            pokemonsfound[p['encounter_id']] = {
+                'encounter_id': b64encode(str(p['encounter_id'])),
+                'encounter_id2': p['encounter_id']
+            }
+            
             pokemons[p['encounter_id']] = {
                 'encounter_id': b64encode(str(p['encounter_id'])),
                 'spawnpoint_id': p['spawn_point_id'],
