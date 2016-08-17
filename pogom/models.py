@@ -9,6 +9,7 @@ from peewee import Model, SqliteDatabase, InsertQuery, IntegerField, \
 from datetime import datetime
 from base64 import b64encode
 import threading
+import requests
 
 from .utils import get_pokemon_name
 
@@ -120,7 +121,8 @@ def parse_map(map_dict):
     pokemons = {}
     pokestops = {}
     gyms = {}
-
+    mobilealert = {1,2,3,4,5,6,7,8,9}   #lists the pokemon you want notifications for
+    
     cells = map_dict['responses']['GET_MAP_OBJECTS']['map_cells']
     if sum(len(cell.keys()) for cell in cells) == len(cells) * 2:
         log.warning("Received valid response but without any data. Possibly rate-limited?")
@@ -130,6 +132,14 @@ def parse_map(map_dict):
             if p['encounter_id'] in pokemons:
                 continue  # prevent unnecessary parsing
 
+            #pushbullet notification
+            lat1 = str(p['latitude'])
+            lat2 = str(p['longitude'])
+            url1 = 'https://www.google.com/maps/place/' + lat1 + ',' + lat2 + '/@' + lat1 + ',' + lat2 + ',30z'
+            headers = {'Access-Token':'PASTEHERE'}
+            if p['pokemon_data']['pokemon_id'] in mobilealert:
+                requests.post('https://api.pushbullet.com/v2/pushes', headers=headers, data = {'type':'link', 'title':get_pokemon_name(p['pokemon_data']['pokemon_id']), 'url':url1})   
+    
             pokemons[p['encounter_id']] = {
                 'encounter_id': b64encode(str(p['encounter_id'])),
                 'spawnpoint_id': p['spawn_point_id'],
