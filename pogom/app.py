@@ -141,6 +141,7 @@ class Pogom(Flask):
         with open(config_path, 'w') as f:
             data = {'GOOGLEMAPS_KEY': config['GOOGLEMAPS_KEY'],
                     'CONFIG_PASSWORD': config['CONFIG_PASSWORD'],
+                    'PB_KEY' : config['PB_KEY'],
                     'SCAN_LOCATIONS': self.scan_config.SCAN_LOCATIONS.values(),
                     'ACCOUNTS': config['ACCOUNTS']}
             f.write(json.dumps(data))
