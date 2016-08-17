@@ -10,6 +10,8 @@ from datetime import datetime
 from base64 import b64encode
 import threading
 import requests
+import calendar
+from . import config
 
 from .utils import get_pokemon_name
 
@@ -132,14 +134,18 @@ def parse_map(map_dict):
             if p['encounter_id'] in pokemons:
                 continue  # prevent unnecessary parsing
 
-            #pushbullet notification
+            #pushbullet mobile
             lat1 = str(p['latitude'])
             lat2 = str(p['longitude'])
+            dtime = datetime.utcfromtimestamp((p['last_modified_timestamp_ms'] + p['time_till_hidden_ms']) / 1000.0)
+            unixtime = calendar.timegm(dtime.utctimetuple())
+            displaytime = datetime.fromtimestamp(unixtime).strftime('%H:%M:%S')
             url1 = 'https://www.google.com/maps/place/' + lat1 + ',' + lat2 + '/@' + lat1 + ',' + lat2 + ',30z'
-            headers = {'Access-Token':'PASTEHERE'}
-            if p['pokemon_data']['pokemon_id'] in mobilealert:
-                requests.post('https://api.pushbullet.com/v2/pushes', headers=headers, data = {'type':'link', 'title':get_pokemon_name(p['pokemon_data']['pokemon_id']), 'url':url1})   
-    
+            pbkey = config["PB_KEY"]
+            headers = {'Access-Token':str(pbkey)}
+            if pbkey is not None and p['pokemon_data']['pokemon_id'] in mobilealert and p['encounter_id'] not in pokemons:
+                requests.post('https://api.pushbullet.com/v2/pushes', headers=headers, data = {'type':'link', 'title':get_pokemon_name(p['pokemon_data']['pokemon_id']) + " expires at " + str(displaytime), 'url':url1})    
+
             pokemons[p['encounter_id']] = {
                 'encounter_id': b64encode(str(p['encounter_id'])),
                 'spawnpoint_id': p['spawn_point_id'],
